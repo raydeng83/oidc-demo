@@ -13,10 +13,9 @@ import (
 
 func RegisterHandlers(mux *gin.Engine) {
 	//http.HandleFunc("/oauth2/auth", authEndpoint)
-	mux.GET("/oauth2/auth", authEndpoint)
-	mux.POST("/oauth2/auth", authEndpoint)
-	mux.GET("/oauth2/token", tokenEndpoint)
-	mux.POST("/oauth2/token", tokenEndpoint)
+	mux.Any("/oauth2/auth", authEndpoint)
+	mux.Any("/oauth2/token", tokenEndpoint)
+
 }
 
 var (

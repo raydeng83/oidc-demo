@@ -3,8 +3,10 @@ module github.com/raydeng83/oidc-demo
 go 1.17
 
 require (
+	github.com/gin-contrib/sessions v0.0.4
 	github.com/gin-gonic/gin v1.7.7
 	github.com/ory/fosite v0.40.3-0.20210618140333-a4ce3544c299
+	github.com/rs/xid v1.2.1
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 )
 
@@ -20,6 +22,9 @@ require (
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/google/uuid v1.1.2 // indirect
+	github.com/gorilla/context v1.1.1 // indirect
+	github.com/gorilla/securecookie v1.1.1 // indirect
+	github.com/gorilla/sessions v1.2.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
@@ -44,7 +49,6 @@ require (
 	github.com/spf13/cobra v1.0.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	golang.org/x/crypto v0.0.0-20201203163018-be400aefbc4c // indirect
