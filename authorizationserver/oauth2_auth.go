@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func authEndpoint(ctx *gin.Context) {
+func AuthEndpoint(ctx *gin.Context) {
 
 	req := ctx.Request
 	rw := ctx.Writer

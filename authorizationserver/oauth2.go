@@ -3,20 +3,12 @@ package authorizationserver
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"github.com/gin-gonic/gin"
 	"github.com/ory/fosite/compose"
 	"github.com/ory/fosite/handler/openid"
 	"github.com/ory/fosite/storage"
 	"github.com/ory/fosite/token/jwt"
 	"time"
 )
-
-func RegisterHandlers(mux *gin.Engine) {
-	//http.HandleFunc("/oauth2/auth", authEndpoint)
-	mux.Any("/oauth2/auth", authEndpoint)
-	mux.Any("/oauth2/token", tokenEndpoint)
-
-}
 
 var (
 	config = &compose.Config{

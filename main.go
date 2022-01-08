@@ -35,19 +35,25 @@ func main() {
 
 	mux.LoadHTMLGlob("templates/*.tmpl")
 
-	// ### oauth2 server ###
-	authorizationserver.RegisterHandlers(mux) // the authorization server (fosite)
 	mux.GET("/login", handlers.SignInGet)
 	mux.POST("/login", handlers.SignInPost)
 	mux.GET("/", func(c *gin.Context) {
 		c.Redirect(http.StatusSeeOther, "/home")
 	})
+	mux.GET("/logout", handlers.Logout)
 
 	authorized := mux.Group("/")
+	authorized.Any("/oauth2/token", authorizationserver.TokenEndpoint) // token endpoint should be accessible without login
 	authorized.Use(authHandler.AuthMiddleware())
-	authorized.GET("/home", func(c *gin.Context) {
-		c.HTML(200, "home.tmpl", gin.H{})
-	})
+	{
+		authorized.GET("/home", func(c *gin.Context) {
+			c.HTML(200, "home.tmpl", gin.H{})
+		})
+
+		// ### oauth2 server ###
+		// the authorization server (fosite)
+		authorized.Any("/oauth2/auth", authorizationserver.AuthEndpoint)
+	}
 
 	mux.Run("localhost:8080")
 }

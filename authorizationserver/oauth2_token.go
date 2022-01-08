@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-func tokenEndpoint(ctx *gin.Context) {
+func TokenEndpoint(ctx *gin.Context) {
 	req := ctx.Request
 	rw := ctx.Writer
 
