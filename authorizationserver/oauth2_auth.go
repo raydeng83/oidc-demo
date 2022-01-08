@@ -1,7 +1,10 @@
 package authorizationserver
 
 import (
+	"encoding/json"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/raydeng83/oidc-demo/models"
 	"log"
 	"net/url"
 	"strings"
@@ -35,7 +38,14 @@ func AuthEndpoint(ctx *gin.Context) {
 		ar.GrantScope(scope)
 	}
 
-	mySessionData := newSession("peter")
+	sessionUserJsonString := sessions.Default(ctx).Get("sessionUser").(string)
+	sessionUser := models.User{}
+	err = json.Unmarshal([]byte(sessionUserJsonString), &sessionUser)
+	if err != nil {
+		log.Println("Error unmarshalling session user")
+		return
+	}
+	mySessionData := newSession(sessionUser.Username)
 
 	response, err := oauth2.NewAuthorizeResponse(ctx, ar, mySessionData)
 

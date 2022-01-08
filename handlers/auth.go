@@ -2,10 +2,14 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/raydeng83/oidc-demo/models"
+	"github.com/raydeng83/oidc-demo/repository"
 	"github.com/rs/xid"
+	"golang.org/x/crypto/bcrypt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -13,6 +17,8 @@ import (
 	"strings"
 	"time"
 )
+
+var SessionUser models.User
 
 type AuthHandler struct {
 	ctx context.Context
@@ -59,7 +65,17 @@ func SignInPost(c *gin.Context) {
 	username := r.Form.Get("username")
 	password := r.Form.Get("password")
 
-	if username != "ldeng" || password != "pwd123" {
+	// if username is not found
+	user, err := repository.GetUserByUsername(username)
+	if err != nil {
+		log.Printf("Error finding user with username %s\n", username)
+		return
+	}
+
+	// validate username and password
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+
+	if err != nil {
 		c.HTML(http.StatusUnauthorized, "login.tmpl", gin.H{
 			"error": "Authentication failed",
 			"state": state,
@@ -70,16 +86,24 @@ func SignInPost(c *gin.Context) {
 	// generate user session
 	session := sessions.Default(c)
 	sessionToken := xid.New().String()
+	marshalledUser, _ := json.Marshal(user)
+	session.Set("sessionUser", string(marshalledUser))
 	session.Set("ssoToken", sessionToken)
 	session.Save()
 
-	// check OAuth request
-	var m = map[string]string{}
-	paramParts := strings.Split(state, "&")
+	c.Set("sessionUser", *user) // set user in session
+	SessionUser = *user         // sessionUser is file level var
 
-	for _, p := range paramParts {
-		f := strings.SplitN(p, "=", 2)
-		m[f[0]] = f[1]
+	// check url parameter exists
+	var m = map[string]string{}
+
+	if len(state) > 0 {
+		paramParts := strings.Split(state, "&")
+
+		for _, p := range paramParts {
+			f := strings.SplitN(p, "=", 2)
+			m[f[0]] = f[1]
+		}
 	}
 
 	targetPath := m["target_path"]
@@ -104,6 +128,7 @@ func (handler *AuthHandler) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
 		sessionToken := session.Get("ssoToken")
+		sessionUserJson := session.Get("sessionUser")
 
 		if sessionToken == nil {
 			targetPath := c.Request.URL.Path
@@ -138,6 +163,11 @@ func (handler *AuthHandler) AuthMiddleware() gin.HandlerFunc {
 			c.Redirect(http.StatusFound, "/login")
 			c.Abort()
 		} else {
+			sessionUserJsonString := sessionUserJson.(string)
+			user := models.User{}
+			json.Unmarshal([]byte(sessionUserJsonString), &user)
+			SessionUser = user                // sessionUser is file level var
+			c.Set("sessionUser", SessionUser) // set user in session
 			c.Next()
 		}
 	}

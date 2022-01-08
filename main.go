@@ -6,7 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/raydeng83/oidc-demo/authorizationserver"
 	"github.com/raydeng83/oidc-demo/handlers"
+	"github.com/raydeng83/oidc-demo/models"
+	"github.com/raydeng83/oidc-demo/repository"
+	"golang.org/x/crypto/bcrypt"
 	goauth "golang.org/x/oauth2"
+	"log"
 	"net/http"
 )
 
@@ -17,7 +21,7 @@ var clientConf = goauth.Config{
 	ClientID:     "my-client",
 	ClientSecret: "foobar",
 	RedirectURL:  "http://localhost:3846/callback",
-	Scopes:       []string{"photos", "openid", "offline"},
+	Scopes:       []string{"photos", "openid", "offline", "profile"},
 	Endpoint: goauth.Endpoint{
 		TokenURL: "http://localhost:8080/oauth2/token",
 		AuthURL:  "http://localhost:8080/oauth2/auth",
@@ -25,6 +29,30 @@ var clientConf = goauth.Config{
 }
 
 func main() {
+	db := repository.InitDb()
+	db.AutoMigrate(&models.User{})
+
+	// init users in repo
+	var users []models.User
+	err := repository.GetUsers(&users)
+	if err != nil {
+		log.Println("error finding users from repo")
+	}
+	if len(users) == 0 {
+		passwordBytes, err := bcrypt.GenerateFromPassword([]byte("pwd123"), 12)
+		admin := models.User{Username: "admin", Password: string(passwordBytes), Email: "admin@example.com", FirstName: "admin", LastName: "admin"}
+		_, err = repository.CreateUser(&admin)
+		if err != nil {
+			log.Println("cannot create admin user")
+		}
+
+		ldeng := models.User{Username: "ldeng", Password: string(passwordBytes), Email: "ldeng@example.com", FirstName: "ldeng", LastName: "ldeng"}
+		_, err = repository.CreateUser(&ldeng)
+		if err != nil {
+			log.Println("cannot create ldeng user")
+		}
+	}
+
 	mux := gin.Default()
 	store := cookie.NewStore([]byte("secret"))
 	mux.Use(sessions.Sessions("sso-session", store))
@@ -47,7 +75,9 @@ func main() {
 	authorized.Use(authHandler.AuthMiddleware())
 	{
 		authorized.GET("/home", func(c *gin.Context) {
-			c.HTML(200, "home.tmpl", gin.H{})
+			c.HTML(200, "home.tmpl", gin.H{
+				"username": handlers.SessionUser.Username,
+			})
 		})
 
 		// ### oauth2 server ###
