@@ -36,7 +36,7 @@
             {{ .error}}
         </div>
     {{end}}
-    <form action="/login{{if .state}}?{{.state}}{{end}}" method="post">
+    <form action="/login{{if .state}}?{{.state}}{{end}}" method="post" >
         <div class="mb-3">
             <label for="username" class="form-label">Username</label>
             <input type="text" class="form-control" id="username" name="username" autofocus required>

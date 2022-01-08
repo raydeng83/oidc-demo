@@ -30,7 +30,7 @@ func SignInGet(c *gin.Context) {
 	urlParts := make([]string, 0)
 	if strings.Contains(request, "?") {
 		urlParts = strings.Split(request, "?")
-		state, _ = url.QueryUnescape(urlParts[1])
+		state = urlParts[1]
 	}
 
 	c.HTML(http.StatusUnauthorized, "login.tmpl", gin.H{
@@ -60,7 +60,7 @@ func SignInPost(c *gin.Context) {
 	password := r.Form.Get("password")
 
 	if username != "ldeng" || password != "pwd123" {
-		c.HTML(http.StatusOK, "login.tmpl", gin.H{
+		c.HTML(http.StatusUnauthorized, "login.tmpl", gin.H{
 			"error": "Authentication failed",
 			"state": state,
 		})
@@ -82,12 +82,12 @@ func SignInPost(c *gin.Context) {
 		m[f[0]] = f[1]
 	}
 
-	originalRequestPath := m["original_request_path"]
+	targetPath := m["target_path"]
 
 	decodedRequestUrl, _ := url.QueryUnescape(r.URL.String())
 
-	if originalRequestPath != "" {
-		c.Redirect(http.StatusFound, originalRequestPath+"?"+stripQueryParam(decodedRequestUrl, "original_request_path"))
+	if targetPath != "" {
+		c.Redirect(http.StatusFound, targetPath+"?"+stripQueryParam(decodedRequestUrl, "target_path"))
 	} else {
 		c.Redirect(http.StatusFound, "/home")
 	}
@@ -106,7 +106,7 @@ func (handler *AuthHandler) AuthMiddleware() gin.HandlerFunc {
 		sessionToken := session.Get("ssoToken")
 
 		if sessionToken == nil {
-			originalRequestPath := c.Request.URL.Path
+			targetPath := c.Request.URL.Path
 
 			// check request body
 			rawState, err := ioutil.ReadAll(c.Request.Body)
@@ -116,7 +116,7 @@ func (handler *AuthHandler) AuthMiddleware() gin.HandlerFunc {
 			}
 			state := string(rawState)
 			if len(state) > 0 {
-				c.Redirect(http.StatusFound, "/login?original_request_path="+originalRequestPath+"&"+state)
+				c.Redirect(http.StatusFound, "/login?target_path="+targetPath+"&"+state)
 				c.Abort()
 			}
 
@@ -127,11 +127,11 @@ func (handler *AuthHandler) AuthMiddleware() gin.HandlerFunc {
 			urlParts := make([]string, 0)
 			if strings.Contains(requestString, "?") {
 				urlParts = strings.Split(requestString, "?")
-				state, _ = url.QueryUnescape(urlParts[1])
+				state = urlParts[1]
 			}
 
 			if len(state) > 0 {
-				c.Redirect(http.StatusFound, "/login?original_request_path="+originalRequestPath+"&"+state)
+				c.Redirect(http.StatusFound, "/login?target_path="+targetPath+"&"+state)
 				c.Abort()
 			}
 
